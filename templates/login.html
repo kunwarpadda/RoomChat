@@ -1,0 +1,73 @@
+{% extends 'base.html' %} {%block head%}
+
+<link rel="stylesheet" href="{{url_for('static',filename='styles.css')}}" />
+
+{%endblock%} {% block body %}
+<div class="left-side">
+  <div class="content-left">
+    <img src="{{ url_for('static',filename='chat.png')}}" class="image" />
+    <h1 class="welcome-msg">Get started quickly with RoomChat.</h1>
+    <p class="welcome-msg">All your conversations at one place.</p>
+  </div>
+</div>
+<div class="right-side">
+  <div class="content-right">
+    <form method="post" action="/">
+      <h1 id="heading-right">Enter Room</h1>
+      <div class="name-container">
+        <p class="input-header">Name</p>
+        <input
+          class="input-box-name"
+          name="user_name"
+          type="text"
+          placeholder="Enter your name"
+        />
+      </div>
+      <div id="room-container" class="room-container">
+        <p class="input-header">Room Code</p>
+        <input
+          id="room-input"
+          name="room-code"
+          class="input-box-code"
+          type="text"
+          placeholder="Enter room code"
+        />
+      </div>
+      <label class="container">
+        <input
+          class="chkbox"
+          type="checkbox"
+          name="checked"
+          onchange="changer(this.checked)"
+        />
+        <div class="checkmark"></div>
+        <p>Don't have room code</p>
+      </label>
+      <button id="submit-btn" type="submit" class="join-btn">Join Room</button>
+    </form>
+    {% if checked == False %}
+    <div class="error">
+      <h2>Error: {{error}}</h2>
+    </div>
+    {%endif%}
+  </div>
+</div>
+
+<script>
+  const changer = (checked) => {
+    let submit = document.getElementById("submit-btn");
+    let room = document.getElementById("room-container");
+    let input = document.getElementById("room-input");
+    if (checked) {
+      room.classList.toggle("room-container-fade");
+      input.disabled = true;
+      submit.innerHTML = "Create Room";
+    } else {
+      submit.innerHTML = "Join Room";
+      input.disabled = false;
+      room.classList.toggle("room-container-fade");
+    }
+  };
+</script>
+
+{% endblock %}

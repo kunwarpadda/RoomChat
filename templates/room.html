@@ -1,0 +1,202 @@
+{% extends 'base.html' %} {%block head%}
+
+<link rel="stylesheet" href="{{url_for('static',filename='room.css')}}" />
+
+{%endblock%} {%block body%}
+<div id="left" class="left-side">
+	<div id="left-content" class="content-left">
+		<div class="icon-description">
+			<img
+				class="top-icon"
+				src="{{url_for('static',filename='sort.png')}}"
+				onclick="expand()"
+			/>
+			<span
+				id="description-text"
+				class="description-text"
+				data-description="Menu"
+				onclick="expand()"
+			>
+				Menu
+			</span>
+		</div>
+		<div class="icon-description">
+			<img
+				class="icon"
+				onclick="back_home()"
+				src="{{url_for('static',filename='home.png')}}"
+			/>
+			<span
+				onclick="back_home()"
+				id="description-text"
+				class="description-text"
+			>
+				Home
+			</span>
+		</div>
+		<div class="icon-description">
+			<img
+				class="icon"
+				src="{{url_for('static',filename='share.png')}}"
+			/>
+			<span id="description-text" class="description-text">
+				Share room code
+			</span>
+		</div>
+		<div class="icon-description">
+			<img class="icon" src="{{url_for('static',filename='plus.png')}}" />
+			<span id="description-text" class="description-text">
+				Create new room
+			</span>
+		</div>
+		<div class="icon-description">
+			<img class="icon" src="{{url_for('static',filename='user.png')}}" />
+			<span id="description-text" class="description-text">
+				Members list
+			</span>
+		</div>
+	</div>
+</div>
+<div id="right" class="right-side">
+	<div class="content-right">
+		<div class="search-section">
+			<div class="search-box">
+				<img
+					class="search-icon"
+					src="{{url_for('static', filename='search-interface-symbol.png')}}"
+				/>
+				<input
+					id="search-message-input"
+					type="text"
+					placeholder="Search a message..."
+				/>
+			</div>
+		</div>
+
+		<div id="message-display" class="messages-section">
+			<div class="room-code">
+				<h2>Room Code: {{code}}</h2>
+			</div>
+			<div id="messages-container"></div>
+		</div>
+		<div class="input-section">
+			<div class="input-box">
+				<textarea
+					id="message-info"
+					placeholder="Type something here..."
+					rows="3"
+					cols="50"
+				></textarea>
+			</div>
+			<div class="input-btns">
+				<img
+					class="input-icon"
+					src="{{url_for('static', filename='font-adjustment.png')}}"
+				/>
+				<img
+					class="input-icon"
+					src="{{url_for('static', filename='attachment.png')}}"
+				/>
+				<img
+					class="input-icon"
+					src="{{url_for('static', filename='link.png')}}"
+				/>
+				<img
+					class="input-icon"
+					src="{{url_for('static', filename='mic.png')}}"
+				/>
+				<img
+					class="input-icon"
+					src="{{url_for('static', filename='video-camera.png')}}"
+				/>
+				<img
+					id="send-button"
+					class="input-icon"
+					onclick="message_from_input(document.getElementById('message-info'))"
+					src="{{url_for('static', filename='paper-plane.png')}}"
+				/>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script>
+	socketio = io.connect("https://k-roomchat.azurewebsites.net", {
+		transports: ["websocket"],
+	});
+	// socketio = io.connect("http://127.0.0.1:5000", {
+	// 	transports: ["websocket"],
+	// });
+
+	socketio.on("connect", () => {
+		console.log("user_connected");
+	});
+
+	const expand = () => {
+		let left = document.getElementById("left");
+		let right = document.getElementById("right");
+		let content_left = document.getElementById("left-content");
+
+		left.classList.toggle("left-side-expanded");
+		right.classList.toggle("right-side-shrinked");
+		content_left.classList.toggle("content-left-expanded");
+
+		let descriptions = document.querySelectorAll(".description-text");
+
+		descriptions.forEach((description) => {
+			description.classList.toggle("description-text-visible");
+		});
+	};
+
+	const create_msg = (name, message, from) => {
+		let message_section = document.getElementById("message-display");
+
+		var user_name = "{{name}}";
+		message_section.innerHTML += `
+	           <section class="message">
+	           <div class="message ${
+					user_name == name ? "user-message" : "other-user-message"
+				}">
+	           <h3 class="username">${user_name == name ? "You" : name}</h3>
+	           <div class="message-box">
+	             <p>${message}</p>
+	           </div>
+	           <div class = "date">
+	             <p>${new Date().toLocaleTimeString()}</p>
+	           </div>
+	           </div>
+	         </section>`;
+		message_section.scrollTop = message_section.scrollHeight;
+	};
+
+	const message_from_input = (value) => {
+		const message = document.getElementById("message-info");
+		if (message.value == "") return;
+		console.log("trying to send request");
+		socketio.emit("message", { data: message.value });
+		console.log("request sent to the server");
+		message.value = "";
+	};
+
+	socketio.on("message_from_server", (data) => {
+		console.log("request received");
+		create_msg(data.sender, data.message, data.sent_by);
+		console.log("successfully created message");
+	});
+
+	const back_home = () => {
+		window.location.href = "/";
+	};
+</script>
+
+{% for message in messages %}
+
+<script type="text/javascript">
+	create_msg(
+		"{{message.sender}}",
+		"{{message.content}}",
+		"{{message.sent_by}}"
+	);
+</script>
+
+{% endfor %} {%endblock%}
